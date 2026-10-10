@@ -1,43 +1,18 @@
-## Executive summary (read this first)
+# DeltaNLP Agenthon Track 4
 
-DeltaNLP is preparing an evidence-grounded prediction agent for Agenthon Track 4.
-The draft fuses several queries using the official BM25 retrieval implementation, filters documents by date and entity membership, and asks the organizer-provided model to predict three entities per request (larger batches for unusually large rosters).
-Citations are model-selected exact excerpts located and checked in the original text; invalid quotes revert to a short exact passage prefix.
-Offline runs are interface checks and cannot establish accuracy because the practice units do not contain resolved outcomes.
-The code is a first candidate, not a tested competitive submission, and no leaderboard submission has been made.
+Development submission 974337 scored **0.2677**. Version 2 is an unscored replacement candidate; it is not a Final entry.
 
-### Provenance and status
+The rebuilt agent combines runtime numerical forecasting, independent evidence-grounded predictions and a second House-model audit. It preserves complete small numerical documents, validates exact quotes and cutoff dates, repairs missing predictions, and retains valid first-stage forecasts if review fails. Validated structured reasons use the official Final reasoning field.
 
-Official source downloaded through GitHub's browser Download ZIP control on 10 October 2026.
-Repository commit displayed by GitHub: `1185211`; scorer release described there: 5.3.0.
-The source remains unchanged. The imported retrieval code retains its original MIT license under `source/track4-analysis-public-main/LICENSE`.
-The shared scoring toolkit must be pinned to the official v2.5.1 release for formal validation.
+Only the organizer-provided House model is called. Fresh numerical programs operate on the supplied frozen corpus. No additional neural model, stored unit answers or private data is shipped. Requests are bounded to 24 per unit, at most two concurrently, with a 530-second overall budget.
 
-### First-candidate design
+Local tests cover the output contract, all 11 public practice task shapes, failure recovery and numerical execution. They **do not measure predictive accuracy**: practice outcomes are unavailable. House predictions and numerical residual intervals have unverified future performance. A consensus/neutral fallback remains when all inference paths fail. No 0.9 score is promised.
 
-- Read the supplied task and corpus only. Apply the cutoff before indexing or inference.
-- Restrict evidence using the manifest's entity labels or shared-document designation.
-- Break flat documents into overlapping passages without changing character offsets.
-- Retrieve using the actual task prompt, target definition and entity features.
-- Batch two entities per model request and use the runtime model name and token.
-- Validate numbers, labels, intervals and evidence IDs before accepting a model response.
-- Emit a complete roster with explicit fallback diagnostics when inference fails.
+See [research and limitations](RESEARCH-V2.md) and [artifact provenance](ARTIFACT_PROVENANCE.md). The Docker build verifies Linux/amd64 execution under non-root, read-only, network-isolated conditions and anonymous image access.
 
-The fallback is an uncalibrated consensus/neutral recovery path. It has no claimed predictive advantage.
-Intervals supplied by the model are not empirically calibrated yet.
-Evidence quotations establish provenance; they do not by themselves prove that a forecast is correct.
+Official retrieval code retains its MIT license. Public practice files are used in CI, not copied into the image. Team keys and credentials are excluded.
 
-### Remaining requirements
-
-1. Official schema validation and exact quotation/entity/offset checks passed for all 11 practice units in three modes. The organizer NLI check has not run.
-2. Exercise the House endpoint in a Development evaluation; compare with the official baseline.
-3. Evaluate retrieval and prediction improvements using permitted cutoff-aware data.
-4. Build and test the Linux/amd64 Docker image; Docker was not found on PATH during setup.
-5. Publish the image to a reachable registry and pin its digest.
-6. Generate the descriptor and team claim with the pinned official toolkit, keeping the team key private.
-7. Register the designated CodaBench account for Track 4 if necessary, then upload a validated development entry.
-
-### Official references
+Official references:
 
 - https://github.com/Agenthon-2026/track4-analysis-public
 - https://www.agenthon.net/guides/submission-format/

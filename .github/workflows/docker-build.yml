@@ -1,0 +1,45 @@
+name: Validate and build Track 4 image
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  packages: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unpack reviewed source bundle
+        run: unzip -q agenthon-source.zip
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Check output schema and evidence offsets
+        run: |
+          python -m pip install jsonschema==4.25.1
+          python agenthon/tests/check_candidate.py
+      - name: Build Linux image
+        run: |
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/deltanlp-agenthon-track4:${GITHUB_SHA}"
+          docker build --platform linux/amd64 -t "$IMAGE" agenthon
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+      - name: Container smoke check under restricted settings
+        run: |
+          mkdir -p container-output
+          chmod 777 container-output
+          docker run --rm --network none --read-only --user 65534:65534 --cap-drop ALL --security-opt no-new-privileges --pids-limit 128 --tmpfs /tmp:rw,noexec,nosuid,size=64m -v "$PWD/agenthon/source/track4-analysis-public-main/units/t4-EXAMPLE-eps-beat:/input:ro" -v "$PWD/container-output:/output" "$IMAGE" analyze --task /input/task.json --corpus /input/corpus --out /output/answer.json --offline
+          test -s container-output/answer.json
+      - name: Publish image
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          printf '%s' "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker push "$IMAGE"
+          docker inspect --format '{{index .RepoDigests 0}}' "$IMAGE" > image-digest.txt
+          cat image-digest.txt >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: image-digest-and-smoke-output
+          path: |
+            image-digest.txt
+            container-output/answer.json

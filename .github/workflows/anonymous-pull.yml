@@ -1,0 +1,18 @@
+name: Verify anonymous image access
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull immutable image without credentials
+        run: |
+          export DOCKER_CONFIG="$(mktemp -d)"
+          IMAGE=ghcr.io/mehedi-bepary/deltanlp-agenthon-track4@sha256:4442f210723c955e49205f4ca70bfe7412841ec02b65d38537ca65e5a9d0e07c
+          docker pull "$IMAGE"
+          test "$(docker inspect --format '{{.Os}}/{{.Architecture}}' "$IMAGE")" = linux/amd64
+          test "$(docker inspect --format '{{index .Config.Labels "qfbench2.interface_version"}}' "$IMAGE")" = 2.0
+          test "$(docker inspect --format '{{json .Config.Volumes}}' "$IMAGE")" = null
+          echo "Anonymous pull by digest, Linux/amd64, interface label and absence of VOLUME: passed" >> "$GITHUB_STEP_SUMMARY"
